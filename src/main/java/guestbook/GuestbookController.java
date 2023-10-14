@@ -17,12 +17,17 @@ package guestbook;
 
 import io.github.wimdeblauwe.hsbt.mvc.HtmxResponse;
 import io.github.wimdeblauwe.hsbt.mvc.HxRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+import java.security.Principal;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.Assert;
@@ -32,7 +37,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.ModelAndView;
 
 /**
  * A controller to handle web requests to manage {@link GuestbookEntry}s
@@ -177,5 +184,45 @@ class GuestbookController {
 					.addTemplate("guestbook :: entries");
 
 		}).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+	}
+	@PreAuthorize("hasRole('VALID')")
+	@PostMapping(path = "/guestbook/like/{entry}")
+	HtmxResponse likeEntryHtmx(@PathVariable Optional<GuestbookEntry> entry, Model model) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		boolean authorized = authentication.getAuthorities().stream().anyMatch(r -> r.getAuthority().equals("ROLE_VALID"));
+		if(authorized) {
+			return entry.map(it -> {
+				GuestbookEntry a = guestbook.findById(it.getId()).get();
+				a.Like(authentication.getName());
+				//it.Like(authentication.getName());
+				//guestbook.save(it);
+				guestbook.save(a);
+				model.addAttribute("entries", guestbook.findAll());
+
+				return new HtmxResponse()
+						.addTemplate("guestbook :: entries");
+
+			}).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+		}
+		return new HtmxResponse().browserRedirect("/login");
+	}
+	@PreAuthorize("hasRole('VALID')")
+	@PostMapping(path = "/guestbook/dislike/{entry}")
+	HtmxResponse dislikeEntryHtmx(@PathVariable Optional<GuestbookEntry> entry, Model model) {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		boolean authorized = authentication.getAuthorities().stream().anyMatch(r -> r.getAuthority().equals("ROLE_VALID"));
+		if(authorized) {
+			return entry.map(it -> {
+
+				it.Dislike(authentication.getName());
+				guestbook.save(it);
+				model.addAttribute("entries", guestbook.findAll());
+
+				return new HtmxResponse()
+						.addTemplate("guestbook :: entries");
+
+			}).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+		}
+		return new HtmxResponse().browserRedirect("/login");
 	}
 }

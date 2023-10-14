@@ -37,6 +37,17 @@
 					</div>
 					<div class="card-footer">
 						<footer class="date" th:text="${#temporals.format(entry.date, 'dd. MMMM yyyy - HH:mm')}">Datum</footer>
+						<footer class="rating" th:text="${entry.getRating()}">Rating</footer>
+						<form sec:authorize="hasRole('VALID')" th:method="POST" th:action="@{/guestbook/like/{id}(id=${entry.id})}" th:attr="data-entry-id=${entry.id}">
+							<button th:title="Like" class="btn btn-sm float-left"
+							        hx:target="'#entries'" hx:post="@{/guestbook/like/{id}(id=${entry.id})}">
+							        <span class="fas fa-thumbs-up" th:style="${entry.getLikeColor()}"></span>
+							</button>
+							<button th:title="Dislike" class="btn btn-sm float-left"
+							        hx:target="'#entries'", hx:post="@{/guestbook/dislike/{id}(id=${entry.id})}">
+							        <span class="fas fa-thumbs-down" th:style="${entry.getDislikeColor()}"></span>
+							</button>
+						</form>
 					</div>
 				</div>
 			</div>

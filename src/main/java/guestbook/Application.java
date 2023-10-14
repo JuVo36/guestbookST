@@ -15,6 +15,14 @@
  */
 package guestbook;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.springframework.boot.CommandLineRunner;
@@ -24,6 +32,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -47,6 +61,10 @@ public class Application {
 	 */
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
+		
+		PasswordEncoder c = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+		System.out.println("Password for userADMIN: "+c.encode("TestCase1"));
+		System.out.println("Password for userVALIDATED: "+c.encode("TestCase2"));
 	}
 
 	/**
@@ -101,5 +119,35 @@ public class Application {
 
 			return http.build();
 		}
+		@Bean
+		public UserDetailsService userDetailsService(){
+			//UserDetails user = User.withDefaultPasswordEncoder().username("user").password("passowrd").roles("ADMIN","VALID").build();
+			
+			return new InMemoryUserDetailsManager(readUsers());
+		}
+	}
+	static List<UserDetails> readUsers() {
+		List<UserDetails> users = new ArrayList<UserDetails>();
+		BufferedReader userdata = null;
+		try {
+			userdata = new BufferedReader(new FileReader(new File(ClassLoader.getSystemResource("UserRegistry.txt").getFile())));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		while(true) {
+		if(!(userdata == null)) {
+			String userstr = null;
+			try {
+				userstr = userdata.readLine();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if(userstr == null) {break;}
+			String[] userfragments = userstr.split(" ");
+			users.add(User.withUsername(userfragments[0]).password(userfragments[1]).roles(Arrays.copyOfRange(userfragments, 2, userfragments.length)).build());
+		}}
+		return users;
 	}
 }

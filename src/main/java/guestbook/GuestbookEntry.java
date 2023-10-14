@@ -15,12 +15,19 @@
  */
 package guestbook;
 
+import java.awt.Color;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.Assert;
 
 /**
@@ -36,7 +43,8 @@ class GuestbookEntry {
 	private @Id @GeneratedValue Long id;
 	private final String name, text;
 	private final LocalDateTime date;
-
+	private String Liked = "%";
+	private String Disliked = "%";
 	/**
 	 * Creates a new {@link GuestbookEntry} for the given name and text.
 	 *
@@ -47,7 +55,7 @@ class GuestbookEntry {
 
 		Assert.hasText(name, "Name must not be null or empty!");
 		Assert.hasText(text, "Text must not be null or empty!");
-
+		
 		this.name = name;
 		this.text = text;
 		this.date = LocalDateTime.now();
@@ -60,6 +68,36 @@ class GuestbookEntry {
 		this.date = null;
 	}
 
+	public void Like(String username) {
+		if(Liked.contains("%"+username+"%")) {
+			Liked = Liked.replace("%"+username+"%", "%");
+		}else {
+			Disliked = Disliked.replace("%"+username+"%", "%");
+			Liked += username+"%";
+		}
+	}
+	public void Dislike(String username) {
+		if(Disliked.contains("%"+username+"%")) {
+			Disliked = Disliked.replace("%"+username+"%", "%");
+		}else {
+			Liked = Liked.replace("%"+username+"%", "%");
+			Disliked += username+"%";
+		}
+	}
+	public String getLikeColor() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if(Liked.contains("%"+auth.getName()+"%")) {return "color:blue";}
+		return "color:black";
+	}
+	public String getDislikeColor() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if(Disliked.contains("%"+auth.getName()+"%")) {return "color:blue";}
+		return "color:black";
+	}
+	public int getRating() {
+		return Liked.split("%", -1).length - Disliked.split("%", -1).length;
+	}
+	
 	public String getName() {
 		return name;
 	}

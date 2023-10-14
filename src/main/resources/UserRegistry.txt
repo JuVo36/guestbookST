@@ -1,0 +1,2 @@
+userADMIN {bcrypt}$2a$10$rbBsoPSTYkxuFbrz0cIUnegr/Dh3NNGs62Cx44Uq3Gn3vXa6ZWba2 ADMIN VALID
+userVALIDATED {bcrypt}$2a$10$P2ByXvqtk5NSozSHWJk0MezkGtKoScKm5o8E5T6AV5dU.wh4wbEHq VALID
